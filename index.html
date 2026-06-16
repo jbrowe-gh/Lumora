@@ -130,6 +130,36 @@
   .tips li{font-size:13px;line-height:1.5;color:var(--ink);padding-left:18px;position:relative;}
   .tips li::before{content:"";position:absolute;left:0;top:7px;width:6px;height:6px;border-radius:50%;background:var(--cam-accent);}
 
+  /* Lighting planner */
+  .lights{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:16px;margin-bottom:11px;}
+  .lights h4,.look h4{margin:0 0 12px;font-size:12px;letter-spacing:2px;text-transform:uppercase;color:var(--cam-accent);font-family:var(--mono);display:flex;align-items:center;gap:7px;}
+  .light-row{display:flex;align-items:center;gap:12px;padding:11px 0;border-top:1px solid var(--line);}
+  .light-row:first-of-type{border-top:none;}
+  .light-dot{width:34px;height:34px;border-radius:9px;flex:none;display:flex;align-items:center;justify-content:center;}
+  .light-dot svg{width:18px;height:18px;}
+  .light-info{flex:1;min-width:0;}
+  .light-info .ln{font-size:13px;font-weight:600;}
+  .light-info .lr{font-size:11px;color:var(--ink-dim);margin-top:1px;}
+  .light-vals{display:flex;gap:8px;flex:none;}
+  .light-vals .v{font-family:var(--mono);font-size:12px;background:var(--panel-2);border:1px solid var(--line);border-radius:8px;padding:6px 9px;text-align:center;min-width:54px;}
+  .light-vals .v b{display:block;font-size:14px;color:var(--ink);}
+  .light-vals .v span{font-size:8px;letter-spacing:1px;color:var(--ink-faint);text-transform:uppercase;}
+  .mood-note{font-size:11px;color:var(--ink-dim);margin-top:11px;line-height:1.45;}
+
+  /* Camera looks */
+  .look{background:linear-gradient(160deg,var(--panel-2),var(--panel));border:1px solid var(--line);border-radius:var(--radius);padding:16px;margin-bottom:11px;}
+  .look .lens-tag{font-family:var(--mono);font-size:10px;color:var(--ink-faint);margin-bottom:12px;letter-spacing:.5px;}
+  .look-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:9px;margin-bottom:12px;}
+  .look-cell{background:var(--panel);border:1px solid var(--line);border-radius:11px;padding:11px 8px;text-align:center;}
+  .look-cell .lc-label{font-family:var(--mono);font-size:8px;letter-spacing:1.5px;text-transform:uppercase;color:var(--ink-faint);margin-bottom:5px;}
+  .look-cell .lc-val{font-size:18px;font-weight:700;}
+  .look-cell .lc-val small{font-size:11px;color:var(--ink-dim);font-weight:500;}
+  .look-desc{font-size:12px;color:var(--ink);line-height:1.5;}
+  .look-desc b{color:var(--cam-accent);}
+  .dof-bar{height:7px;border-radius:5px;background:var(--panel);border:1px solid var(--line);margin:11px 0 6px;position:relative;overflow:hidden;}
+  .dof-bar .fill{position:absolute;top:0;bottom:0;background:linear-gradient(90deg,var(--cam-accent),transparent);border-radius:5px;transition:width .4s ease,left .4s ease;}
+  .dof-scale{display:flex;justify-content:space-between;font-family:var(--mono);font-size:9px;color:var(--ink-faint);}
+
   .footer-note{font-size:10px;color:var(--ink-faint);text-align:center;line-height:1.6;font-family:var(--mono);letter-spacing:.3px;}
   .footer-note b{color:var(--ink-dim);}
   .hidden{display:none!important;}
@@ -148,7 +178,7 @@
         </g>
       </svg>
     </div>
-    <div><h1>LUMORA</h1><div class="sub">Cine Light Meter <span class="ver">v2.0</span></div></div>
+    <div><h1>LUMORA</h1><div class="sub">Cine Light Meter <span class="ver">v3.0</span></div></div>
   </div>
   <div class="cam-toggle" id="camToggle">
     <button data-cam="komodox" class="active">Komodo&nbsp;X</button>
@@ -208,6 +238,26 @@
         <select id="qualitySelect"></select>
       </div>
     </div>
+    <div class="row">
+      <div class="field">
+        <label>Camera look</label>
+        <select id="lookSelect">
+          <option value="shallow">Shallow depth of field</option>
+          <option value="portrait" selected>Natural portrait</option>
+          <option value="deep">Deep focus / everything sharp</option>
+          <option value="wide">Wide establishing</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Lighting mood</label>
+        <select id="moodSelect">
+          <option value="high">High-key (soft)</option>
+          <option value="natural" selected>Natural</option>
+          <option value="moody">Moody</option>
+          <option value="dramatic">Dramatic</option>
+        </select>
+      </div>
+    </div>
   </div>
 
   <div class="controls" id="liveControls">
@@ -263,6 +313,25 @@
       <div class="meter-scale"><span>Underexposed</span><span>Optimal</span><span>Overexposed</span></div>
     </div>
 
+    <div class="look">
+      <h4><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3.2"/></svg>Camera look</h4>
+      <div class="lens-tag" id="lensTag">Canon RF 24-70mm f/2.8</div>
+      <div class="look-grid">
+        <div class="look-cell"><div class="lc-label">Focal</div><div class="lc-val" id="lookFocal">70<small>mm</small></div></div>
+        <div class="look-cell"><div class="lc-label">Aperture</div><div class="lc-val" id="lookAp">f/2.8</div></div>
+        <div class="look-cell"><div class="lc-label">Distance</div><div class="lc-val" id="lookDist">2<small>m</small></div></div>
+      </div>
+      <div class="dof-bar"><div class="fill" id="dofFill"></div></div>
+      <div class="dof-scale"><span>Near</span><span id="dofReadout">~8 cm in focus</span><span>Far</span></div>
+      <p class="look-desc" id="lookDesc" style="margin-top:11px;"></p>
+    </div>
+
+    <div class="lights">
+      <h4><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-4 10.5c.7.7 1 1.3 1 2.5h6c0-1.2.3-1.8 1-2.5A6 6 0 0 0 12 3z"/></svg>Lighting plan · bi-color</h4>
+      <div id="lightRows"></div>
+      <p class="mood-note" id="moodNote"></p>
+    </div>
+
     <div class="tips">
       <h4><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-4 10.5c.7.7 1 1.3 1 2.5h6c0-1.2.3-1.8 1-2.5A6 6 0 0 0 12 3z"/></svg>Set-up notes</h4>
       <ul id="tipsList"></ul>
@@ -293,7 +362,8 @@
         {id:"MQ", label:"MQ — balanced", note:"Cinema (non-VFX) and high-end TV. Strong quality with reasonable card time."},
         {id:"LQ", label:"LQ — efficient", note:"TV, online, docs, interviews, long takes. Longest record time."}
       ]},
-      footer:"Komodo X · single native ISO 800 (EI 250–12800) · 6K S35 global shutter · 16.5 stops · R3D. Confirm with on-camera false color & histogram."
+      footer:"Komodo X · single native ISO 800 (EI 250–12800) · 6K S35 global shutter · 16.5 stops · R3D. Confirm with on-camera false color & histogram.",
+      coc:0.018, sensorW:27.03, lens:{name:"Canon RF 24-70mm f/2.8", min:24, max:70, fast:2.8}
     },
     a7siii:{
       name:"A7S III", accent:"#f0a000", gradient:"#ffc24d",
@@ -308,7 +378,8 @@
         {id:"S",  label:"XAVC S — Long GOP", note:"Efficient Long-GOP. Excellent everyday quality, smaller files."},
         {id:"HS", label:"XAVC HS — HEVC", note:"H.265, most efficient per-MB. Needs more playback/edit horsepower."}
       ]},
-      footer:"A7S III · Rec.709/Standard base ISO 80 · full-frame 12.1MP · 15-stop video DR. In S-Log3 the base shifts to dual-native 640 / 12800."
+      footer:"A7S III · Rec.709/Standard base ISO 80 · full-frame 12.1MP · 15-stop video DR. In S-Log3 the base shifts to dual-native 640 / 12800.",
+      coc:0.029, sensorW:35.6, lens:{name:"Sony E-mount 24-70mm f/2.8", min:24, max:70, fast:2.8}
     }
   };
 
@@ -322,6 +393,10 @@
   const modeLive=$('modeLive'), modePhoto=$('modePhoto'), hint=$('hint');
   const camToggle=$('camToggle');
   const resSelect=$('resSelect'), fpsSelect=$('fpsSelect'), qualitySelect=$('qualitySelect'), qualityLabel=$('qualityLabel');
+  const lookSelect=$('lookSelect'), moodSelect=$('moodSelect');
+  const lensTag=$('lensTag'), lookFocal=$('lookFocal'), lookAp=$('lookAp'), lookDist=$('lookDist');
+  const dofFill=$('dofFill'), dofReadout=$('dofReadout'), lookDesc=$('lookDesc');
+  const lightRows=$('lightRows'), moodNote=$('moodNote');
   const results=$('results'), isoVal=$('isoVal'), isoNote=$('isoNote');
   const kelvinVal=$('kelvinVal'), kelvinPtr=$('kelvinPtr'), apVal=$('apVal'), apNote=$('apNote');
   const shutVal=$('shutVal'), shutNote=$('shutNote'), expoFill=$('expoFill'), expoWord=$('expoWord');
@@ -479,6 +554,75 @@
     return {fps:requestedFps,capped:false,resLabel:res.label};
   }
 
+  // ============ Depth-of-field + camera look engine ============
+  function dofCalc(focalMM,fnum,subjDistM,coc){
+    const f=focalMM,N=fnum,s=subjDistM*1000;
+    const H=(f*f)/(N*coc)+f;
+    const near=(s*(H-f))/(H+s-2*f);
+    const far=(s*(H-f))/(H-s);
+    const farM = (far<=0)?Infinity:far/1000;
+    const nearM=near/1000;
+    const total = farM===Infinity?Infinity:(farM-nearM);
+    return {nearM,farM,total};
+  }
+  // Look presets: choose focal, target aperture, subject distance, intent.
+  // Aperture is clamped to the lens's fastest value; for deep looks we stop down.
+  function planLook(s){
+    const c=CAMERAS[cam], lens=c.lens, look=lookSelect.value;
+    let focal, ap, dist, desc;
+    if(look==='shallow'){
+      focal=lens.max; ap=lens.fast; dist=1.8;
+      desc='Longest end of the lens, wide open, subject close — maximum background separation and creamy bokeh. Nail focus on the eyes; even a small sway shifts it.';
+    } else if(look==='portrait'){
+      focal=Math.round((lens.min+lens.max)/2/5)*5; ap=Math.min(4,lens.fast<4?4:lens.fast); dist=2;
+      desc='A natural, flattering framing. Mid focal length and a moderate stop keep the subject sharp while the background stays soft but readable.';
+    } else if(look==='deep'){
+      focal=lens.min; ap=8; dist=3;
+      desc='Wide end stopped down so foreground and background are both sharp. Great for blocking with movement or showing the environment.';
+    } else { // wide establishing
+      focal=lens.min; ap=5.6; dist=4;
+      desc='Wide, deep, and contextual — places the subject in the space. Watch edge distortion on faces near the frame edge at 24mm.';
+    }
+    ap=Math.max(lens.fast,ap); // never faster than the lens
+    const d=dofCalc(focal,ap,dist,c.coc);
+    let readout;
+    if(d.farM===Infinity){ readout='near \u2192 infinity sharp'; }
+    else if(d.total<0.15){ readout='~'+Math.round(d.total*100)+' cm in focus'; }
+    else if(d.total<1){ readout='~'+Math.round(d.total*100)+' cm in focus'; }
+    else { readout='~'+d.total.toFixed(1)+' m in focus'; }
+    return {focal,ap,dist,desc,dof:d,readout,lensName:lens.name};
+  }
+
+  // ============ Lighting planner (bi-color key + fill, optional rim) ============
+  function planLights(s){
+    const mood=moodSelect.value;
+    // fill ratio relative to key
+    const ratios={ high:0.75, natural:0.5, moody:0.25, dramatic:0.12 };
+    const fillRatio=ratios[mood]||0.5;
+    const stopsUnder=Math.log2(1/fillRatio).toFixed(1);
+    // Key Kelvin: match the scene so added light blends with ambient.
+    const keyK=s.kelvin;
+    // Fill slightly warmer than key reads natural on skin; rim cooler for separation.
+    const fillK=Math.min(9000,Math.max(2700,keyK-150));
+    const rimK=Math.min(9000,keyK+600);
+    // Base key intensity from how dark the scene is (darker scene -> more fixture output).
+    let keyPct = s.lux>=2000?55: s.lux>=800?70: s.lux>=300?82: s.lux>=80?92:100;
+    const fillPct=Math.round(keyPct*fillRatio);
+    const rimPct=Math.round(keyPct*(mood==='dramatic'?0.6:0.45));
+    const lights=[
+      {role:'Key', k:keyK, pct:keyPct, color:'#ffd9a0', icon:'sun'},
+      {role:'Fill', k:fillK, pct:fillPct, color:'#bcd6ff', icon:'soft'}
+    ];
+    // include a rim/hair light suggestion for moody/dramatic or bright separation
+    if(mood==='moody'||mood==='dramatic'||s.contrast>0.22){
+      lights.push({role:'Hair / rim', k:rimK, pct:rimPct, color:'#cfeaff', icon:'rim'});
+    }
+    const moodTxt='Mood: '+({high:'High-key',natural:'Natural',moody:'Moody',dramatic:'Dramatic'}[mood])+
+      ' \u2014 fill set ~'+stopsUnder+' stops under key ('+Math.round(fillRatio*100)+'%). '+
+      '% values are relative panel output; match your panels by eye to the camera\u2019s histogram \u2014 brands report brightness differently.';
+    return {lights, moodTxt, keyK};
+  }
+
   // ============ Recommendation engine ============
   function recommend(s){
     const c=CAMERAS[cam];
@@ -531,9 +675,11 @@
     const scene=classifyScene(s);
     const quality=c.quality.options.find(q=>q.id===qId);
     const tips=buildTips(s,{iso,ap,kelvin,word,scene,fps,quality,capRes,resLabel:capRes.resLabel});
+    const look=planLook(s);
+    const lighting=planLights(s);
 
     return {iso,isoNoteTxt,ap,apNoteTxt,shutter,shutNoteTxt,kelvin,bal,word,scene,tips,
-      swatch:s.swatch, fps, resLabel:capRes.resLabel, capRes, quality, qId};
+      swatch:s.swatch, fps, resLabel:capRes.resLabel, capRes, quality, qId, look, lighting};
   }
   function nearestStop(v,stops){let best=stops[0],d=Infinity;for(const s of stops){const dd=Math.abs(s-v);if(dd<d){d=dd;best=s;}}return best;}
 
@@ -593,6 +739,39 @@
     r.tips.forEach(tx=>{const li=document.createElement('li');li.textContent=tx;tipsList.appendChild(li);});
     footerNote.innerHTML=c.footer;
 
+    // ---- Camera look ----
+    const lk=r.look;
+    lensTag.textContent=lk.lensName;
+    lookFocal.innerHTML=lk.focal+'<small>mm</small>';
+    lookAp.textContent='f/'+String(lk.ap).replace(/\.0$/,'');
+    lookDist.innerHTML=lk.dist+'<small>m</small>';
+    dofReadout.textContent=lk.readout;
+    lookDesc.innerHTML=lk.desc;
+    // DoF bar: map total focus depth (0..6m) to a fill width; shallow = narrow.
+    const depth = lk.dof.total===Infinity?6:Math.min(6,lk.dof.total);
+    const widthPct=Math.max(6,Math.min(100,(depth/6)*100));
+    dofFill.style.left=(50-widthPct/2)+'%';
+    dofFill.style.width=widthPct+'%';
+
+    // ---- Lighting plan ----
+    const sun='<svg viewBox="0 0 24 24" fill="none" stroke="#1a1205" stroke-width="2"><circle cx="12" cy="12" r="4"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M19 5l-2 2M7 17l-2 2" stroke-linecap="round"/></svg>';
+    const soft='<svg viewBox="0 0 24 24" fill="none" stroke="#11151c" stroke-width="2"><rect x="4" y="6" width="16" height="12" rx="2"/><path d="M8 6v12M16 6v12" opacity=".5"/></svg>';
+    const rim='<svg viewBox="0 0 24 24" fill="none" stroke="#11151c" stroke-width="2"><path d="M12 3a9 9 0 1 0 9 9" stroke-linecap="round"/></svg>';
+    const icons={sun,soft,rim};
+    lightRows.innerHTML=r.lighting.lights.map(L=>
+      '<div class="light-row">'+
+        '<div class="light-dot" style="background:'+L.color+'">'+icons[L.icon]+'</div>'+
+        '<div class="light-info"><div class="ln">'+L.role+'</div><div class="lr">'+
+          (L.role==='Key'?'Sets exposure & blends with ambient':L.role==='Fill'?'Lifts shadows, controls contrast':'Separates subject from background')+
+        '</div></div>'+
+        '<div class="light-vals">'+
+          '<div class="v"><b>'+L.k+'</b><span>Kelvin</span></div>'+
+          '<div class="v"><b>'+L.pct+'%</b><span>Output</span></div>'+
+        '</div>'+
+      '</div>'
+    ).join('');
+    moodNote.textContent=r.lighting.moodTxt;
+
     results.classList.add('show');
     results.scrollIntoView({behavior:'smooth',block:'start'});
   }
@@ -641,7 +820,7 @@
   });
 
   // ============ Live re-render when settings change ============
-  [resSelect,fpsSelect,qualitySelect].forEach(sel=>sel.addEventListener('change',()=>{
+  [resSelect,fpsSelect,qualitySelect,lookSelect,moodSelect].forEach(sel=>sel.addEventListener('change',()=>{
     if(lastSample && results.classList.contains('show')) render(recommend(lastSample));
   }));
 
