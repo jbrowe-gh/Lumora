@@ -178,7 +178,7 @@
         </g>
       </svg>
     </div>
-    <div><h1>LUMORA</h1><div class="sub">Cine Light Meter <span class="ver">v3.0</span></div></div>
+    <div><h1>LUMORA</h1><div class="sub">Cine Light Meter <span class="ver">v3.1</span></div></div>
   </div>
   <div class="cam-toggle" id="camToggle">
     <button data-cam="komodox" class="active">Komodo&nbsp;X</button>
@@ -315,7 +315,11 @@
 
     <div class="look">
       <h4><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3.2"/></svg>Camera look</h4>
-      <div class="lens-tag" id="lensTag">Canon RF 24-70mm f/2.8</div>
+      <div class="field" style="margin-bottom:12px;">
+        <label>Lens</label>
+        <select id="lensSelect"></select>
+      </div>
+      <div class="lens-tag" id="lensTag"></div>
       <div class="look-grid">
         <div class="look-cell"><div class="lc-label">Focal</div><div class="lc-val" id="lookFocal">70<small>mm</small></div></div>
         <div class="look-cell"><div class="lc-label">Aperture</div><div class="lc-val" id="lookAp">f/2.8</div></div>
@@ -324,6 +328,7 @@
       <div class="dof-bar"><div class="fill" id="dofFill"></div></div>
       <div class="dof-scale"><span>Near</span><span id="dofReadout">~8 cm in focus</span><span>Far</span></div>
       <p class="look-desc" id="lookDesc" style="margin-top:11px;"></p>
+      <div class="cap-warn hidden" id="lensWarn" style="margin-top:11px;"></div>
     </div>
 
     <div class="lights">
@@ -363,7 +368,12 @@
         {id:"LQ", label:"LQ — efficient", note:"TV, online, docs, interviews, long takes. Longest record time."}
       ]},
       footer:"Komodo X · single native ISO 800 (EI 250–12800) · 6K S35 global shutter · 16.5 stops · R3D. Confirm with on-camera false color & histogram.",
-      coc:0.018, sensorW:27.03, lens:{name:"Canon RF 24-70mm f/2.8", min:24, max:70, fast:2.8}
+      coc:0.018, sensorW:27.03,
+      lenses:[
+        {id:"sirui24", name:"Sirui Night Walker 24mm T1.2", type:"prime", focal:24, min:24, max:24, fast:1.2, mfd:0.30, cover:"s35", af:false, note:"S35-covering cine prime, manual focus. Fastest glass here \u2014 the low-light & shallow-DoF hero."},
+        {id:"rf2470", name:"Canon RF 24-70mm f/2.8L IS", type:"zoom", min:24, max:70, fast:2.8, mfd:0.21, cover:"ff", af:true, note:"Full-frame standard zoom. The do-everything lens."},
+        {id:"rf1535", name:"Canon RF 15-35mm f/2.8L IS", type:"zoom", min:15, max:35, fast:2.8, mfd:0.28, cover:"ff", af:true, note:"Full-frame ultra-wide zoom. Establishing shots and tight spaces."}
+      ]
     },
     a7siii:{
       name:"A7S III", accent:"#f0a000", gradient:"#ffc24d",
@@ -379,7 +389,12 @@
         {id:"HS", label:"XAVC HS — HEVC", note:"H.265, most efficient per-MB. Needs more playback/edit horsepower."}
       ]},
       footer:"A7S III · Rec.709/Standard base ISO 80 · full-frame 12.1MP · 15-stop video DR. In S-Log3 the base shifts to dual-native 640 / 12800.",
-      coc:0.029, sensorW:35.6, lens:{name:"Sony E-mount 24-70mm f/2.8", min:24, max:70, fast:2.8}
+      coc:0.029, sensorW:35.6,
+      lenses:[
+        {id:"sony2470", name:"Sony FE 24-70mm f/2.8 GM II", type:"zoom", min:24, max:70, fast:2.8, mfd:0.21, cover:"ff", af:true, note:"Full-frame standard zoom. The everyday workhorse."},
+        {id:"sony70200", name:"Sony FE 70-200mm f/2.8 GM", type:"zoom", min:70, max:200, fast:2.8, mfd:0.96, cover:"ff", af:true, note:"Full-frame telephoto. Strongest compression & shallow-DoF tool."},
+        {id:"tamron1120", name:"Tamron 11-20mm f/2.8 Di III-A", type:"zoom", min:11, max:20, fast:2.8, mfd:0.15, cover:"apsc", af:true, note:"APS-C ultra-wide. Forces Super 35 crop on the A7S III \u2014 1080-only, vignettes full-frame."}
+      ]
     }
   };
 
@@ -393,7 +408,7 @@
   const modeLive=$('modeLive'), modePhoto=$('modePhoto'), hint=$('hint');
   const camToggle=$('camToggle');
   const resSelect=$('resSelect'), fpsSelect=$('fpsSelect'), qualitySelect=$('qualitySelect'), qualityLabel=$('qualityLabel');
-  const lookSelect=$('lookSelect'), moodSelect=$('moodSelect');
+  const lookSelect=$('lookSelect'), moodSelect=$('moodSelect'), lensSelect=$('lensSelect'), lensWarn=$('lensWarn');
   const lensTag=$('lensTag'), lookFocal=$('lookFocal'), lookAp=$('lookAp'), lookDist=$('lookDist');
   const dofFill=$('dofFill'), dofReadout=$('dofReadout'), lookDesc=$('lookDesc');
   const lightRows=$('lightRows'), moodNote=$('moodNote');
@@ -421,6 +436,8 @@
     fpsSelect.innerHTML=c.fpsOptions.map(f=>'<option value="'+f+'"'+(f===24?' selected':'')+'>'+f+' fps</option>').join('');
     qualityLabel.textContent=c.quality.label;
     qualitySelect.innerHTML=c.quality.options.map(q=>'<option value="'+q.id+'">'+q.label+'</option>').join('');
+    lensSelect.innerHTML='<option value="auto">Auto — best for the look</option>'+
+      c.lenses.map(l=>'<option value="'+l.id+'">'+l.name+'</option>').join('');
   }
   function setCamera(newCam){
     cam=newCam;
@@ -565,32 +582,56 @@
     const total = farM===Infinity?Infinity:(farM-nearM);
     return {nearM,farM,total};
   }
-  // Look presets: choose focal, target aperture, subject distance, intent.
-  // Aperture is clamped to the lens's fastest value; for deep looks we stop down.
+  // Auto-pick the best lens in the kit for a given look.
+  function autoLens(lenses, look){
+    // shallow/portrait want the most reach + fastest glass; deep/wide want the widest.
+    if(look==='shallow'){
+      // prefer fastest aperture, then longest reach
+      return lenses.slice().sort((a,b)=> (a.fast-b.fast) || (b.max-a.max))[0];
+    }
+    if(look==='portrait'){
+      // a lens that reaches a flattering 50-85mm if possible, else fastest
+      const reachy=lenses.filter(l=>l.max>=50);
+      return (reachy.length?reachy:lenses).slice().sort((a,b)=> (b.max-a.max) || (a.fast-b.fast))[0];
+    }
+    // deep / wide -> widest available
+    return lenses.slice().sort((a,b)=> a.min-b.min)[0];
+  }
+
   function planLook(s){
-    const c=CAMERAS[cam], lens=c.lens, look=lookSelect.value;
+    const c=CAMERAS[cam], look=lookSelect.value, choice=lensSelect.value;
+    const lens = choice==='auto' ? autoLens(c.lenses, look) : (c.lenses.find(l=>l.id===choice)||c.lenses[0]);
+    const lo=lens.min, hi=lens.max, prime=(lo===hi);
     let focal, ap, dist, desc;
     if(look==='shallow'){
-      focal=lens.max; ap=lens.fast; dist=1.8;
-      desc='Longest end of the lens, wide open, subject close — maximum background separation and creamy bokeh. Nail focus on the eyes; even a small sway shifts it.';
+      focal=hi; ap=lens.fast; dist=Math.max(lens.mfd+0.3,1.6);
+      desc=prime
+        ? 'Wide open on a fast prime, subject close — maximum separation and bokeh. Manual focus: nail the eyes, even a small sway shifts it.'
+        : 'Longest end, wide open, subject close — maximum background separation and creamy bokeh. Watch critical focus.';
     } else if(look==='portrait'){
-      focal=Math.round((lens.min+lens.max)/2/5)*5; ap=Math.min(4,lens.fast<4?4:lens.fast); dist=2;
-      desc='A natural, flattering framing. Mid focal length and a moderate stop keep the subject sharp while the background stays soft but readable.';
+      focal=prime?hi:Math.min(hi,Math.max(lo,Math.round((lo+hi)/2/5)*5));
+      ap=Math.max(lens.fast, 4); dist=2;
+      desc='A natural, flattering framing. Moderate stop keeps the subject sharp while the background stays soft but readable.';
     } else if(look==='deep'){
-      focal=lens.min; ap=8; dist=3;
+      focal=lo; ap=8; dist=3;
       desc='Wide end stopped down so foreground and background are both sharp. Great for blocking with movement or showing the environment.';
     } else { // wide establishing
-      focal=lens.min; ap=5.6; dist=4;
-      desc='Wide, deep, and contextual — places the subject in the space. Watch edge distortion on faces near the frame edge at 24mm.';
+      focal=lo; ap=5.6; dist=4;
+      desc='Wide, deep, and contextual — places the subject in the space. Watch edge distortion on faces near the frame edge.';
     }
-    ap=Math.max(lens.fast,ap); // never faster than the lens
+    ap=Math.max(lens.fast,ap); // never faster than the lens allows
     const d=dofCalc(focal,ap,dist,c.coc);
     let readout;
-    if(d.farM===Infinity){ readout='near \u2192 infinity sharp'; }
-    else if(d.total<0.15){ readout='~'+Math.round(d.total*100)+' cm in focus'; }
-    else if(d.total<1){ readout='~'+Math.round(d.total*100)+' cm in focus'; }
-    else { readout='~'+d.total.toFixed(1)+' m in focus'; }
-    return {focal,ap,dist,desc,dof:d,readout,lensName:lens.name};
+    if(d.farM===Infinity) readout='near \u2192 infinity sharp';
+    else if(d.total<1) readout='~'+Math.round(d.total*100)+' cm in focus';
+    else readout='~'+d.total.toFixed(1)+' m in focus';
+
+    // Lens-specific warning (e.g. APS-C lens on full-frame body)
+    let warn=null;
+    if(cam==='a7siii' && lens.cover==='apsc'){
+      warn='The '+lens.name.split(' f/')[0]+' is an APS-C lens. On the A7S III it forces Super 35 crop mode — recording is 1080-only (no 4K), and full-frame use vignettes. Focal acts ~1.5\u00d7 longer ('+Math.round(focal*1.5)+'mm equivalent).';
+    }
+    return {focal,ap,dist,desc,dof:d,readout,lensName:lens.name,lensNote:lens.note,prime,af:lens.af,warn,autoPicked:(choice==='auto')};
   }
 
   // ============ Lighting planner (bi-color key + fill, optional rim) ============
@@ -741,17 +782,22 @@
 
     // ---- Camera look ----
     const lk=r.look;
-    lensTag.textContent=lk.lensName;
+    lensTag.textContent=(lk.autoPicked?'Auto · ':'')+lk.lensName+(lk.prime?' · prime':'')+(lk.af?'':' · manual focus');
     lookFocal.innerHTML=lk.focal+'<small>mm</small>';
     lookAp.textContent='f/'+String(lk.ap).replace(/\.0$/,'');
     lookDist.innerHTML=lk.dist+'<small>m</small>';
     dofReadout.textContent=lk.readout;
-    lookDesc.innerHTML=lk.desc;
+    lookDesc.innerHTML=lk.desc+(lk.lensNote?' <b style="color:var(--ink-dim);font-weight:500">'+lk.lensNote+'</b>':'');
     // DoF bar: map total focus depth (0..6m) to a fill width; shallow = narrow.
     const depth = lk.dof.total===Infinity?6:Math.min(6,lk.dof.total);
     const widthPct=Math.max(6,Math.min(100,(depth/6)*100));
     dofFill.style.left=(50-widthPct/2)+'%';
     dofFill.style.width=widthPct+'%';
+    // Lens warning (APS-C on full frame, etc.)
+    if(lk.warn){
+      lensWarn.classList.remove('hidden');
+      lensWarn.innerHTML='<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 9v4M12 17h.01M10.3 3.9l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/></svg><span>'+lk.warn+'</span>';
+    } else lensWarn.classList.add('hidden');
 
     // ---- Lighting plan ----
     const sun='<svg viewBox="0 0 24 24" fill="none" stroke="#1a1205" stroke-width="2"><circle cx="12" cy="12" r="4"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M19 5l-2 2M7 17l-2 2" stroke-linecap="round"/></svg>';
@@ -820,7 +866,7 @@
   });
 
   // ============ Live re-render when settings change ============
-  [resSelect,fpsSelect,qualitySelect,lookSelect,moodSelect].forEach(sel=>sel.addEventListener('change',()=>{
+  [resSelect,fpsSelect,qualitySelect,lookSelect,moodSelect,lensSelect].forEach(sel=>sel.addEventListener('change',()=>{
     if(lastSample && results.classList.contains('show')) render(recommend(lastSample));
   }));
 
