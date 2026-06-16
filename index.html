@@ -114,6 +114,24 @@
   .meter{height:10px;border-radius:6px;background:linear-gradient(90deg,#1d2530,#2a3340,#1d2530);position:relative;overflow:hidden;}
   .meter .fill{position:absolute;top:0;bottom:0;left:0;border-radius:6px;background:linear-gradient(90deg,var(--red),var(--amber),var(--good));transition:width .5s ease;}
   .meter-scale{display:flex;justify-content:space-between;font-family:var(--mono);font-size:9px;color:var(--ink-faint);margin-top:6px;}
+  .evtrim{margin-top:14px;border-top:1px solid var(--line);padding-top:12px;}
+  .evtrim-head{display:flex;justify-content:space-between;font-family:var(--mono);font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--ink-faint);margin-bottom:8px;}
+  .evtrim-head b{color:var(--cam-accent);}
+  .evtrim input[type=range]{width:100%;-webkit-appearance:none;appearance:none;height:4px;border-radius:3px;background:linear-gradient(90deg,var(--cyan),var(--line),var(--amber));outline:none;}
+  .evtrim input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:18px;height:18px;border-radius:50%;background:var(--ink);border:3px solid var(--cam-accent);cursor:pointer;}
+  .evtrim input[type=range]::-moz-range-thumb{width:18px;height:18px;border-radius:50%;background:var(--ink);border:3px solid var(--cam-accent);cursor:pointer;}
+  .meter-note{font-size:11px;color:var(--ink-dim);line-height:1.5;margin:9px 0 0;}
+  /* reconciliation card */
+  #reconCard .label{font-family:var(--mono);font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--ink-faint);margin-bottom:12px;display:flex;justify-content:space-between;}
+  #reconCard .label b{color:var(--ink);}
+  .recon-gap{font-size:13px;line-height:1.5;margin:0 0 12px;}
+  .recon-gap b{color:var(--cam-accent);}
+  .recon-opts{display:grid;grid-template-columns:1fr 1fr 1fr;gap:9px;}
+  .recon-opt{background:var(--panel-2);border:1px solid var(--line);border-radius:11px;padding:11px 9px;text-align:center;}
+  .recon-opt .ro-label{font-family:var(--mono);font-size:8px;letter-spacing:1.5px;text-transform:uppercase;color:var(--ink-faint);margin-bottom:5px;}
+  .recon-opt .ro-val{font-size:15px;font-weight:700;line-height:1.15;}
+  .recon-opt .ro-sub{font-size:9px;color:var(--ink-dim);margin-top:3px;}
+  .recon-balanced{font-size:13px;color:var(--good);line-height:1.5;display:flex;align-items:center;gap:8px;}
 
   /* Record format summary */
   .format-card{background:var(--panel-2);border:1px solid var(--line);border-radius:var(--radius);padding:14px 16px;margin-bottom:11px;}
@@ -178,7 +196,7 @@
         </g>
       </svg>
     </div>
-    <div><h1>LUMORA</h1><div class="sub">Cine Light Meter <span class="ver">v3.1</span></div></div>
+    <div><h1>LUMORA</h1><div class="sub">Cine Light Meter <span class="ver">v3.2</span></div></div>
   </div>
   <div class="cam-toggle" id="camToggle">
     <button data-cam="komodox" class="active">Komodo&nbsp;X</button>
@@ -311,13 +329,27 @@
       <div class="label"><span>Exposure balance</span><b id="expoWord">Balanced</b></div>
       <div class="meter"><div class="fill" id="expoFill" style="width:50%"></div></div>
       <div class="meter-scale"><span>Underexposed</span><span>Optimal</span><span>Overexposed</span></div>
+      <div class="evtrim">
+        <div class="evtrim-head">
+          <span>Meter trim</span>
+          <b id="evTrimVal">0.0 EV</b>
+        </div>
+        <input type="range" id="evTrimSlider" min="-3" max="3" step="0.5" value="0">
+        <p class="meter-note">Your phone auto-brightens, white-balances, and tone-maps before LUMORA sees the frame — so a dim room can read brighter than it is. This is a relative guide, not a calibrated meter. If the reading feels off, trim it here and always confirm on the camera's false color &amp; histogram.</p>
+      </div>
     </div>
 
     <div class="look">
       <h4><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3.2"/></svg>Camera look</h4>
-      <div class="field" style="margin-bottom:12px;">
-        <label>Lens</label>
-        <select id="lensSelect"></select>
+      <div class="row" style="display:flex;gap:10px;margin-bottom:12px;">
+        <div class="field" style="flex:1;">
+          <label>Lens</label>
+          <select id="lensSelect"></select>
+        </div>
+        <div class="field" style="flex:1;">
+          <label>Aperture</label>
+          <select id="apertureManual"><option value="">Auto (from look)</option></select>
+        </div>
       </div>
       <div class="lens-tag" id="lensTag"></div>
       <div class="look-grid">
@@ -329,6 +361,11 @@
       <div class="dof-scale"><span>Near</span><span id="dofReadout">~8 cm in focus</span><span>Far</span></div>
       <p class="look-desc" id="lookDesc" style="margin-top:11px;"></p>
       <div class="cap-warn hidden" id="lensWarn" style="margin-top:11px;"></div>
+    </div>
+
+    <div class="expo" id="reconCard">
+      <div class="label"><span>Exposure at f/<b id="reconAp">2.8</b></span><b id="reconState">Balanced</b></div>
+      <div id="reconBody"></div>
     </div>
 
     <div class="lights">
@@ -409,6 +446,8 @@
   const camToggle=$('camToggle');
   const resSelect=$('resSelect'), fpsSelect=$('fpsSelect'), qualitySelect=$('qualitySelect'), qualityLabel=$('qualityLabel');
   const lookSelect=$('lookSelect'), moodSelect=$('moodSelect'), lensSelect=$('lensSelect'), lensWarn=$('lensWarn');
+  const apertureManual=$('apertureManual'), evTrimSlider=$('evTrimSlider'), evTrimVal=$('evTrimVal');
+  const reconAp=$('reconAp'), reconState=$('reconState'), reconBody=$('reconBody');
   const lensTag=$('lensTag'), lookFocal=$('lookFocal'), lookAp=$('lookAp'), lookDist=$('lookDist');
   const dofFill=$('dofFill'), dofReadout=$('dofReadout'), lookDesc=$('lookDesc');
   const lightRows=$('lightRows'), moodNote=$('moodNote');
@@ -438,6 +477,21 @@
     qualitySelect.innerHTML=c.quality.options.map(q=>'<option value="'+q.id+'">'+q.label+'</option>').join('');
     lensSelect.innerHTML='<option value="auto">Auto — best for the look</option>'+
       c.lenses.map(l=>'<option value="'+l.id+'">'+l.name+'</option>').join('');
+    populateApertures();
+  }
+  // Manual aperture options reflect the currently selected lens's fastest stop.
+  const ALL_STOPS=[1.2,1.4,2,2.8,4,5.6,8,11,16,22];
+  function populateApertures(){
+    const c=CAMERAS[cam];
+    const choice=lensSelect.value;
+    const lens = (choice && choice!=='auto') ? c.lenses.find(l=>l.id===choice) : null;
+    const fast = lens ? lens.fast : Math.min.apply(null, c.lenses.map(l=>l.fast));
+    const prev=apertureManual.value;
+    const opts=ALL_STOPS.filter(st=>st>=fast);
+    apertureManual.innerHTML='<option value="">Auto (from look)</option>'+
+      opts.map(st=>'<option value="'+st+'">f/'+String(st).replace(/\.0$/,'')+'</option>').join('');
+    // keep previous selection if still valid
+    if(prev && opts.indexOf(parseFloat(prev))>-1) apertureManual.value=prev; else apertureManual.value='';
   }
   function setCamera(newCam){
     cam=newCam;
@@ -620,6 +674,13 @@
       desc='Wide, deep, and contextual — places the subject in the space. Watch edge distortion on faces near the frame edge.';
     }
     ap=Math.max(lens.fast,ap); // never faster than the lens allows
+
+    // Manual aperture override (if the user has dialed one for this lens)
+    let manualAp=parseFloat(apertureManual.value||'');
+    let isManual=false;
+    if(manualAp && manualAp>=lens.fast && manualAp<=22){
+      ap=manualAp; isManual=true;
+    }
     const d=dofCalc(focal,ap,dist,c.coc);
     let readout;
     if(d.farM===Infinity) readout='near \u2192 infinity sharp';
@@ -631,7 +692,7 @@
     if(cam==='a7siii' && lens.cover==='apsc'){
       warn='The '+lens.name.split(' f/')[0]+' is an APS-C lens. On the A7S III it forces Super 35 crop mode — recording is 1080-only (no 4K), and full-frame use vignettes. Focal acts ~1.5\u00d7 longer ('+Math.round(focal*1.5)+'mm equivalent).';
     }
-    return {focal,ap,dist,desc,dof:d,readout,lensName:lens.name,lensNote:lens.note,prime,af:lens.af,warn,autoPicked:(choice==='auto')};
+    return {focal,ap,dist,desc,dof:d,readout,lensName:lens.name,lensNote:lens.note,prime,af:lens.af,warn,autoPicked:(choice==='auto'),isManual,lensFast:lens.fast,lensId:lens.id};
   }
 
   // ============ Lighting planner (bi-color key + fill, optional rim) ============
@@ -695,12 +756,24 @@
       else { iso=12800; isoNoteTxt='Deep low light — the A7S III\u2019s strength. Add light if framing allows.'; }
     }
 
-    // Aperture from EV at working ISO and shutter
+    // --- Unified aperture: the LOOK (or manual override) drives the aperture. ---
+    // EV trim lets the user correct the phone meter (which auto-brightens/AWBs).
+    const evTrim = parseFloat(apertureManual.dataset.evtrim||'0')||0;
+    const sEV = s.ev + evTrim;
+
+    const look=planLook(s);          // returns the chosen aperture for the look
+    const ap = look.ap;              // single source of truth
+
+    // Exposure-correct aperture at this ISO/shutter, for comparison only:
     const isoFactor=Math.log2(iso/100);
-    const evWork=s.ev+isoFactor;
-    let N=Math.sqrt(Math.pow(2,evWork)*shutterSec);
-    N=Math.max(1.4,Math.min(22,N));
-    const ap=nearestStop(N,[1.4,2,2.8,4,5.6,8,11,16,22]);
+    const evWork=sEV+isoFactor;
+    const Ncorrect=Math.sqrt(Math.pow(2,evWork)*shutterSec);
+    // Stops the look aperture is OVER (positive) or UNDER (negative) correct exposure:
+    const stopsOver = 2*Math.log2(Ncorrect/ap);
+
+    // How to reconcile — show all three levers (user decides):
+    const recon = buildReconcile(stopsOver, iso, shutDenom);
+
     let apNoteTxt = ap<=2?'Wide open — shallow depth, watch critical focus.'
       :ap<=4?'Flattering depth for a single subject.'
       :ap<=8?'Balanced sharpness across the frame.'
@@ -709,18 +782,35 @@
     const shutNoteTxt='180° shutter for '+fps+'fps. Halve the time to cut flicker under some lights.';
     const kelvin=s.kelvin;
 
-    // Exposure balance
-    let bal=50+(s.avgLum-0.42)*140; bal=Math.max(4,Math.min(96,bal));
+    // Exposure balance, now reflecting the chosen aperture (stopsOver) + EV trim
+    let bal=50 + stopsOver*11; bal=Math.max(4,Math.min(96,bal));
     let word = bal<38?'Underexposed':bal>62?'Overexposed':'Balanced';
 
     const scene=classifyScene(s);
     const quality=c.quality.options.find(q=>q.id===qId);
     const tips=buildTips(s,{iso,ap,kelvin,word,scene,fps,quality,capRes,resLabel:capRes.resLabel});
-    const look=planLook(s);
     const lighting=planLights(s);
 
     return {iso,isoNoteTxt,ap,apNoteTxt,shutter,shutNoteTxt,kelvin,bal,word,scene,tips,
-      swatch:s.swatch, fps, resLabel:capRes.resLabel, capRes, quality, qId, look, lighting};
+      swatch:s.swatch, fps, resLabel:capRes.resLabel, capRes, quality, qId, look, lighting,
+      stopsOver, recon, evTrim, Ncorrect};
+  }
+
+  // Build the reconciliation options when the look aperture doesn't match exposure.
+  function buildReconcile(stopsOver, iso, shutDenom){
+    const over = stopsOver > 0; // too much light -> need ND / lower ISO / faster shutter
+    const mag = Math.abs(stopsOver);
+    if(mag < 0.4) return {balanced:true, text:'Exposure lands right at this aperture — no correction needed.'};
+    const ndStops = Math.round(mag*2)/2; // nearest half stop
+    const ndDensity = (ndStops*0.3).toFixed(1);
+    const ndFactor = Math.round(Math.pow(2, Math.round(ndStops)));
+    const isoAlt = Math.max(50, Math.round(iso/Math.pow(2,stopsOver)/10)*10);
+    const shutAlt = Math.round(shutDenom*Math.pow(2,stopsOver));
+    return {
+      balanced:false, over, mag:+mag.toFixed(1),
+      nd:{stops:ndStops, density:ndDensity, factor:ndFactor},
+      isoAlt, shutAlt, shutDenom, iso
+    };
   }
   function nearestStop(v,stops){let best=stops[0],d=Infinity;for(const s of stops){const dd=Math.abs(s-v);if(dd<d){d=dd;best=s;}}return best;}
 
@@ -756,7 +846,7 @@
     isoVal.textContent=r.iso; isoNote.textContent=r.isoNoteTxt;
     kelvinVal.textContent=r.kelvin;
     apVal.textContent=String(r.ap).replace(/\.0$/,'');
-    apNote.textContent=r.apNoteTxt;
+    apNote.textContent=(r.look.isManual?'Manual: ':'For your look: ')+r.apNoteTxt;
     shutVal.textContent=r.shutter; shutNote.textContent=r.shutNoteTxt;
     kelvinPtr.style.left=Math.max(0,Math.min(100,(r.kelvin-2400)/(9000-2400)*100))+'%';
     expoFill.style.width=r.bal+'%'; expoWord.textContent=r.word;
@@ -798,6 +888,30 @@
       lensWarn.classList.remove('hidden');
       lensWarn.innerHTML='<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 9v4M12 17h.01M10.3 3.9l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/></svg><span>'+lk.warn+'</span>';
     } else lensWarn.classList.add('hidden');
+
+    // ---- Exposure reconciliation (unified aperture) ----
+    reconAp.textContent=String(r.ap).replace(/\.0$/,'');
+    const rc=r.recon;
+    if(rc.balanced){
+      reconState.textContent='Balanced';
+      reconState.style.color='var(--good)';
+      reconBody.innerHTML='<div class="recon-balanced"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M20 6L9 17l-5-5"/></svg>'+rc.text+'</div>';
+    } else {
+      reconState.textContent=(rc.over?'+':'\u2212')+rc.mag+' stops '+(rc.over?'over':'under');
+      reconState.style.color=rc.over?'var(--red)':'var(--cyan)';
+      const dir=rc.over?'too much light':'too little light';
+      const ndLine=rc.over
+        ? 'Add an <b>ND '+rc.nd.density+'</b> (ND'+rc.nd.factor+', \u2248'+rc.nd.stops+' stops) to hold f/'+String(r.ap).replace(/\.0$/,'')+'.'
+        : 'No ND needed — you\u2019re short on light. Open up, raise ISO, or add light.';
+      reconBody.innerHTML=
+        '<p class="recon-gap">At f/'+String(r.ap).replace(/\.0$/,'')+' you\u2019re letting in <b>'+rc.mag+' stops '+(rc.over?'too much':'too little')+'</b> light. Pick one fix:</p>'+
+        '<div class="recon-opts">'+
+          '<div class="recon-opt"><div class="ro-label">ND filter</div><div class="ro-val">'+(rc.over?'ND'+rc.nd.factor:'\u2014')+'</div><div class="ro-sub">'+(rc.over?rc.nd.density+' density':'not needed')+'</div></div>'+
+          '<div class="recon-opt"><div class="ro-label">or ISO</div><div class="ro-val">'+rc.isoAlt+'</div><div class="ro-sub">was '+rc.iso+'</div></div>'+
+          '<div class="recon-opt"><div class="ro-label">or Shutter</div><div class="ro-val">1/'+rc.shutAlt+'</div><div class="ro-sub">was 1/'+rc.shutDenom+'</div></div>'+
+        '</div>'+
+        '<p class="recon-gap" style="margin:11px 0 0;font-size:11px;color:var(--ink-faint)">'+(rc.over?'ND keeps your look intact and is the cleanest fix outdoors. Changing ISO or shutter alters noise or motion blur.':'Raising ISO is quickest; opening the aperture changes your depth of field.')+'</p>';
+    }
 
     // ---- Lighting plan ----
     const sun='<svg viewBox="0 0 24 24" fill="none" stroke="#1a1205" stroke-width="2"><circle cx="12" cy="12" r="4"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M19 5l-2 2M7 17l-2 2" stroke-linecap="round"/></svg>';
@@ -866,9 +980,21 @@
   });
 
   // ============ Live re-render when settings change ============
-  [resSelect,fpsSelect,qualitySelect,lookSelect,moodSelect,lensSelect].forEach(sel=>sel.addEventListener('change',()=>{
+  [resSelect,fpsSelect,qualitySelect,lookSelect,moodSelect,apertureManual].forEach(sel=>sel.addEventListener('change',()=>{
     if(lastSample && results.classList.contains('show')) render(recommend(lastSample));
   }));
+  // Lens change: refresh valid aperture options first, then re-render.
+  lensSelect.addEventListener('change',()=>{
+    populateApertures();
+    if(lastSample && results.classList.contains('show')) render(recommend(lastSample));
+  });
+  // EV trim: store on dataset (read by recommend) and re-render live.
+  evTrimSlider.addEventListener('input',()=>{
+    const v=parseFloat(evTrimSlider.value)||0;
+    apertureManual.dataset.evtrim=String(v);
+    evTrimVal.textContent=(v>0?'+':'')+v.toFixed(1)+' EV';
+    if(lastSample && results.classList.contains('show')) render(recommend(lastSample));
+  });
 
   window.addEventListener('pagehide',()=>{ stopLiveSampling(); stopCamera(); });
   document.addEventListener('visibilitychange',()=>{ if(document.hidden) stopLiveSampling(); else if(stream) startLiveSampling(); });
